@@ -1,0 +1,25 @@
+# =========================
+# Python & Environment
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+
+**/.venv*
+**/venv*
+ai_op/.venv311/
+execution_engine/venv/
+
+# =========================
+# Data, Models & Storage (LSM-Tree)
+# =========================
+# Do NOT upload massive raw data, ML models, or DB logs
+data/
+storage_engine/data/
+*.csv
+*.json
+*.parquet
+*.pkl
+wal.log
+sstable_*.json
