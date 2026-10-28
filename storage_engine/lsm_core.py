@@ -62,7 +62,6 @@ class WriteAheadLog:
 # Creating the MemTable Class 
 class MemTable:
     """MemTable: Data Structure on RAM, Organized with Timestamp"""
-    class MemTable:
     def __init__(self, max_size=1000):
         self.table = {}
         self.max_size = max_size 
