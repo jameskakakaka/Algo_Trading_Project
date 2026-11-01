@@ -99,8 +99,18 @@ from schemas.data_types import (
 - `classify_bar_events(existing, candidate)` returns `distinct`, `duplicate`, or
   `conflict`. Existing must be valid. Candidate must satisfy validation except
   that a differing end boundary for the same identity is reported as conflict.
-  For a distinct identity the candidate must pass full validation. Other invalid
-  fields raise. Classification never authorizes storing an invalid candidate.
+  The candidate's actual end must still be a strict integer in the v1 timestamp
+  domain. For this exception only, metadata is checked against the end derived
+  from open time and timeframe: `expected_end <= observed <= published`, rather
+  than the candidate's changed end. Thus a changed end beyond observation time
+  is a conflict, but observation before the expected end or publication before
+  observation still raises `BarValidationError`. All unrelated validation rules
+  remain enforced. For a distinct identity the candidate must pass full
+  validation, including its actual end boundary. Invalid existing bars, malformed
+  candidate fields, and invalid distinct candidates raise `BarValidationError`
+  rather than returning a classification. Neither input is mutated.
+  Classification never authorizes storing an invalid candidate;
+  `validate_finalized_bar` always enforces the full original contract.
 
 Same identity and canonical market content is a duplicate even if observation,
 publication, or source differs. Same identity with changed OHLCV or end time is a

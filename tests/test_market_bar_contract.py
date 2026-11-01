@@ -156,6 +156,49 @@ class MarketBarContractTests(unittest.TestCase):
                 self.assertEqual(classify_bar_events(a, dict(a, **{field: value})), 'conflict')
         self.assertFalse(market_content_equal(a, dict(a, volume='1')))
 
+    def test_end_boundary_conflicts_beyond_observation_time(self):
+        for interval in INTERVAL_MS:
+            existing = bar(interval)
+            for delta in (-60000, -2001, -1, 1, 2001, 60000):
+                candidate = dict(existing, end_time_ms=existing['end_time_ms'] + delta)
+                original = dict(candidate)
+                with self.subTest(interval=interval, delta=delta):
+                    self.assertEqual(classify_bar_events(existing, candidate), 'conflict')
+                    self.assertEqual(candidate, original)
+                    with self.assertRaises(BarValidationError):
+                        validate_finalized_bar(candidate)
+
+    def test_end_conflict_does_not_hide_invalid_fields(self):
+        existing = bar()
+        candidate = dict(existing, end_time_ms=existing['end_time_ms'] + 60000)
+        for changes in (
+            dict(end_time_ms=True), dict(end_time_ms=1800000000),
+            dict(end_time_ms=1800000000000000), dict(end_time_ms='1800000120000'),
+            dict(end_time_ms=1800000120000.0), dict(end_time_ms=None),
+            dict(observed_at_ms=existing['end_time_ms'] - 1),
+            dict(published_at_ms=existing['observed_at_ms'] - 1),
+            dict(observed_at_ms=True), dict(published_at_ms='1800000063000'),
+            dict(source='Kline'), dict(exchange='other'), dict(market='futures'),
+            dict(symbol='ßUSDT'), dict(timeframe='5m'), dict(event_id='wrong'),
+            dict(open='0'), dict(high='99'), dict(volume='-1'), dict(close='NaN'),
+            dict(schema_version=2), dict(is_final=False), dict(extra=1),
+        ):
+            with self.subTest(changes=changes), self.assertRaises(BarValidationError):
+                classify_bar_events(existing, dict(candidate, **changes))
+        missing = dict(candidate)
+        del missing['volume']
+        with self.assertRaises(BarValidationError):
+            classify_bar_events(existing, missing)
+
+    def test_distinct_identity_requires_strict_end_boundary(self):
+        existing, candidate = bar(), bar(symbol='ETHUSDT')
+        self.assertEqual(classify_bar_events(existing, candidate), 'distinct')
+        for delta in (-60000, 2001, 60000):
+            with self.subTest(delta=delta), self.assertRaises(BarValidationError):
+                classify_bar_events(existing, dict(candidate, end_time_ms=candidate['end_time_ms'] + delta))
+        with self.assertRaises(BarValidationError):
+            classify_bar_events(dict(existing, end_time_ms=existing['end_time_ms'] + 1), candidate)
+
     def test_metadata_consistency(self):
         self.reject(observed_at_ms=bar()['end_time_ms'] - 1)
         self.reject(published_at_ms=bar()['observed_at_ms'] - 1)

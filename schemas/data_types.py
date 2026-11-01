@@ -121,9 +121,14 @@ def _validate_bar(event, *, check_end):
     expected_id = generate_event_id(*(result[k] for k in IDENTITY_FIELDS))
     if type(result["event_id"]) is not str or result["event_id"] != expected_id:
         raise BarValidationError("event_id: does not match canonical identity")
-    if check_end and result["end_time_ms"] != result["open_time_ms"] + INTERVAL_MS[result["timeframe"]]:
+    expected_end = result["open_time_ms"] + INTERVAL_MS[result["timeframe"]]
+    if check_end and result["end_time_ms"] != expected_end:
         raise BarValidationError("end_time_ms: incompatible exclusive boundary")
-    if not result["end_time_ms"] <= result["observed_at_ms"] <= result["published_at_ms"]:
+    # Classification permits a different claimed end, not unrelated malformed
+    # metadata. Check metadata against the identity-derived end in that mode;
+    # the actual claimed end has already passed strict type/domain validation.
+    metadata_end = result["end_time_ms"] if check_end else expected_end
+    if not metadata_end <= result["observed_at_ms"] <= result["published_at_ms"]:
         raise BarValidationError("timestamps: require end <= observed <= published")
     for field in PRICE_FIELDS:
         result[field] = normalize_decimal(result[field])
@@ -161,8 +166,10 @@ def classify_bar_events(left, right):
     """Compare a valid existing bar with an incoming candidate.
 
     A changed end boundary for the same identity is classified as conflict even
-    though that candidate cannot pass standalone validation. Other malformed
-    fields raise. Distinct candidates must pass full validation.
+    though that candidate cannot pass standalone validation. Its actual end must
+    retain a strict integer type/domain; metadata must satisfy identity-derived
+    end <= observed <= published. Other malformed fields raise BarValidationError.
+    Distinct candidates must pass full validation.
     """
     a = validate_finalized_bar(left)
     b = _validate_bar(right, check_end=False)
