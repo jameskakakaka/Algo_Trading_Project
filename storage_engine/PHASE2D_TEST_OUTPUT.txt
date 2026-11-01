@@ -1,0 +1,69 @@
+test_cleanup_on_keyboard_interrupt (test_phase1_executability.PhaseOneTests.test_cleanup_on_keyboard_interrupt) ... ok
+test_cleanup_on_normal_empty_exit (test_phase1_executability.PhaseOneTests.test_cleanup_on_normal_empty_exit) ... ok
+test_cleanup_on_processing_error (test_phase1_executability.PhaseOneTests.test_cleanup_on_processing_error) ... ok
+test_cleanup_on_subscription_error (test_phase1_executability.PhaseOneTests.test_cleanup_on_subscription_error) ... ok
+test_consumer_closes_when_storage_initialization_fails (test_phase1_executability.PhaseOneTests.test_consumer_closes_when_storage_initialization_fails) ... ok
+test_main_dispatches_to_existing_worker_api (test_phase1_executability.PhaseOneTests.test_main_dispatches_to_existing_worker_api) ... ok
+test_script_entry_point_dispatch_and_cleanup (test_phase1_executability.PhaseOneTests.test_script_entry_point_dispatch_and_cleanup) ... ok
+test_target_modules_parse (test_phase1_executability.PhaseOneTests.test_target_modules_parse) ... ok
+test_three_records_are_written_inside_iteration (test_phase1_executability.PhaseOneTests.test_three_records_are_written_inside_iteration) ... ok
+test_wal_closes_even_if_consumer_close_fails (test_phase1_executability.PhaseOneTests.test_wal_closes_even_if_consumer_close_fails) ... ok
+test_abrupt_exit_before_publication_after_sync_and_partial_deletion (test_sstable_compaction.SSTableCompactionTests.test_abrupt_exit_before_publication_after_sync_and_partial_deletion) ... ok
+test_collision_never_overwrites_or_retries (test_sstable_compaction.SSTableCompactionTests.test_collision_never_overwrites_or_retries) ... ok
+test_empty_tables_noop (test_sstable_compaction.SSTableCompactionTests.test_empty_tables_noop) ... ok
+test_failures_preserve_data_and_fence_mutations (test_sstable_compaction.SSTableCompactionTests.test_failures_preserve_data_and_fence_mutations) ... ok
+test_full_merge_typed_keys_null_and_repeated_restart (test_sstable_compaction.SSTableCompactionTests.test_full_merge_typed_keys_null_and_repeated_restart) ... ok
+test_invalid_or_ambiguous_inputs_remain_intact (test_sstable_compaction.SSTableCompactionTests.test_invalid_or_ambiguous_inputs_remain_intact) ... ok
+test_legacy_order_and_generation (test_sstable_compaction.SSTableCompactionTests.test_legacy_order_and_generation) ... ok
+test_malformed_table_fails_before_publication (test_sstable_compaction.SSTableCompactionTests.test_malformed_table_fails_before_publication) ... ok
+test_publication_sync_precedes_every_deletion (test_sstable_compaction.SSTableCompactionTests.test_publication_sync_precedes_every_deletion) ... ok
+test_sole_legacy_merged_and_first_duplicate_match (test_sstable_compaction.SSTableCompactionTests.test_sole_legacy_merged_and_first_duplicate_match) ... ok
+test_wal_and_memtable_unchanged_and_replay_has_precedence (test_sstable_compaction.SSTableCompactionTests.test_wal_and_memtable_unchanged_and_replay_has_precedence) ... ok
+test_abrupt_exit_at_publication_and_retirement_boundaries (test_sstable_publication.SSTablePublicationTests.test_abrupt_exit_at_publication_and_retirement_boundaries) ... ok
+test_after_durable_publication_before_retirement (test_sstable_publication.SSTablePublicationTests.test_after_durable_publication_before_retirement) ... ok
+test_ambiguous_legacy_order_fails_without_modifying_files (test_sstable_publication.SSTablePublicationTests.test_ambiguous_legacy_order_fails_without_modifying_files) ... ok
+test_before_publication_failures_preserve_wal (test_sstable_publication.SSTablePublicationTests.test_before_publication_failures_preserve_wal) ... ok
+test_frozen_clock_multiple_flushes_and_manual_compaction (test_sstable_publication.SSTablePublicationTests.test_frozen_clock_multiple_flushes_and_manual_compaction) ... ok
+test_incomplete_temporaries_are_ignored_and_preserved (test_sstable_publication.SSTablePublicationTests.test_incomplete_temporaries_are_ignored_and_preserved) ... ok
+test_legacy_numeric_order_and_new_tables_take_precedence (test_sstable_publication.SSTablePublicationTests.test_legacy_numeric_order_and_new_tables_take_precedence) ... ok
+test_publication_and_retirement_operation_order (test_sstable_publication.SSTablePublicationTests.test_publication_and_retirement_operation_order) ... ok
+test_publication_collision_does_not_overwrite (test_sstable_publication.SSTablePublicationTests.test_publication_collision_does_not_overwrite) ... ok
+test_publication_directory_sync_failure_does_not_retire_wal (test_sstable_publication.SSTablePublicationTests.test_publication_directory_sync_failure_does_not_retire_wal) ... ok
+test_repeated_restart_generations_and_newest_wins (test_sstable_publication.SSTablePublicationTests.test_repeated_restart_generations_and_newest_wins) ... ok
+test_retirement_failure_before_and_after_atomic_replace (test_sstable_publication.SSTablePublicationTests.test_retirement_failure_before_and_after_atomic_replace) ... ok
+test_retirement_fsync_failures (test_sstable_publication.SSTablePublicationTests.test_retirement_fsync_failures) ... ok
+test_successful_threshold_flush_retires_wal (test_sstable_publication.SSTablePublicationTests.test_successful_threshold_flush_retires_wal) ... ok
+test_typed_keys_and_null_across_generations (test_sstable_publication.SSTablePublicationTests.test_typed_keys_and_null_across_generations) ... ok
+test_existing_pair_format_is_read_without_rewriting (test_sstable_reads.SSTableReadTests.test_existing_pair_format_is_read_without_rewriting) ... ok
+test_five_mixed_keys_flush_and_survive_restart (test_sstable_reads.SSTableReadTests.test_five_mixed_keys_flush_and_survive_restart) ... ok
+test_integer_aliases_do_not_match_memtable (test_sstable_reads.SSTableReadTests.test_integer_aliases_do_not_match_memtable) ... ok
+test_integer_and_string_keys_are_distinct_in_memory_and_on_disk (test_sstable_reads.SSTableReadTests.test_integer_and_string_keys_are_distinct_in_memory_and_on_disk) ... ok
+test_null_sstable_value_and_missing_keys (test_sstable_reads.SSTableReadTests.test_null_sstable_value_and_missing_keys) ... ok
+test_null_update_shadows_old_sstable_value_and_recovers (test_sstable_reads.SSTableReadTests.test_null_update_shadows_old_sstable_value_and_recovers) ... ok
+test_fault_matrix (test_storage_lifecycle.LifecycleTests.test_fault_matrix) ... fault scenarios=56 (before/after real operation)
+ok
+test_partial_wal_write_is_uncertain_and_tail_repair_is_stable (test_storage_lifecycle.LifecycleTests.test_partial_wal_write_is_uncertain_and_tail_repair_is_stable) ... ok
+test_seeded_complete_lifecycle (test_storage_lifecycle.LifecycleTests.test_seeded_complete_lifecycle) ... seed=0 steps=300 counts={'overwrite': 45, 'extra-put': 45, 'put': 84, 'flush': 45, 'get': 45, 'compact': 44, 'reopen': 37}
+seed=1 steps=300 counts={'put': 91, 'get': 41, 'overwrite': 53, 'extra-put': 53, 'reopen': 38, 'compact': 44, 'flush': 33}
+seed=7 steps=300 counts={'get': 46, 'reopen': 41, 'overwrite': 40, 'extra-put': 40, 'compact': 33, 'put': 91, 'flush': 49}
+seed=42 steps=300 counts={'reopen': 46, 'put': 86, 'compact': 40, 'flush': 35, 'overwrite': 49, 'extra-put': 49, 'get': 44}
+seed=73 steps=300 counts={'get': 40, 'flush': 56, 'put': 81, 'compact': 48, 'reopen': 34, 'overwrite': 41, 'extra-put': 41}
+seed=101 steps=300 counts={'compact': 30, 'get': 52, 'reopen': 58, 'flush': 37, 'put': 83, 'overwrite': 40, 'extra-put': 40}
+seed=2025 steps=300 counts={'compact': 53, 'put': 86, 'get': 38, 'flush': 39, 'overwrite': 43, 'extra-put': 43, 'reopen': 41}
+seed=65537 steps=300 counts={'overwrite': 37, 'extra-put': 37, 'put': 91, 'compact': 34, 'get': 32, 'reopen': 52, 'flush': 54}
+ok
+test_abrupt_process_exit_recovers_acknowledged_writes (test_wal_recovery.WALRecoveryTests.test_abrupt_process_exit_recovers_acknowledged_writes) ... ok
+test_append_synchronizes_file_and_directory (test_wal_recovery.WALRecoveryTests.test_append_synchronizes_file_and_directory) ... ok
+test_directory_sync_failure_does_not_acknowledge (test_wal_recovery.WALRecoveryTests.test_directory_sync_failure_does_not_acknowledge) ... ok
+test_failed_tail_repair_sync_aborts_initialization (test_wal_recovery.WALRecoveryTests.test_failed_tail_repair_sync_aborts_initialization) ... ok
+test_legacy_records_recover_in_file_order (test_wal_recovery.WALRecoveryTests.test_legacy_records_recover_in_file_order) ... ok
+test_replay_preserves_types_order_and_last_write_wins (test_wal_recovery.WALRecoveryTests.test_replay_preserves_types_order_and_last_write_wins) ... ok
+test_restarts_do_not_relog_or_trigger_flush (test_wal_recovery.WALRecoveryTests.test_restarts_do_not_relog_or_trigger_flush) ... ok
+test_sync_failure_does_not_acknowledge_or_update_memory (test_wal_recovery.WALRecoveryTests.test_sync_failure_does_not_acknowledge_or_update_memory) ... ok
+test_terminated_corruption_is_never_a_torn_tail (test_wal_recovery.WALRecoveryTests.test_terminated_corruption_is_never_a_torn_tail) ... ok
+test_unterminated_tail_is_removed_before_next_append (test_wal_recovery.WALRecoveryTests.test_unterminated_tail_is_removed_before_next_append) ... ok
+
+----------------------------------------------------------------------
+Ran 55 tests in 19.486s
+
+OK
