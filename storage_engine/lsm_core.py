@@ -39,22 +39,77 @@ class BloomFilter:
 
 # Write Ahead Log (WAL)
 class WriteAheadLog:
-    """WAL: Save the Log into RAM to prevent loss from crashing"""
+    """Single-writer WAL for integer/string keys and JSON-compatible values.
+
+    New records are ["wal-v1", key, value]; legacy key::JSON is readable
+    (decimal legacy keys are interpreted as integers). Only newline-terminated
+    records are committed. An unterminated tail is discarded, even if its JSON
+    looks complete; malformed terminated records always raise ValueError.
+    """
     def __init__(self, filepath):
         self.filepath = filepath
         # Open the file in append-only ('a')
-        self.file = open(self.filepath, 'a')
+        self.file = open(self.filepath, 'a', encoding='utf-8')
+        self.failed = False
 
     def append(self, key, value):
-        # Format: key::value\n
-        log_entry = f"{key}::{json.dumps(value)}\n"
-        self.file.write(log_entry)
-        self.file.flush() # Tell the function to write down in the disk 
+        if self.failed:
+            raise RuntimeError("WAL write previously failed; close and reopen the engine")
+        if type(key) not in (int, str):
+            raise TypeError("WAL keys must be integers or strings")
+        log_entry = json.dumps(["wal-v1", key, value], allow_nan=False) + '\n'
+        try:
+            self.file.write(log_entry)
+            self.file.flush()
+            os.fsync(self.file.fileno())
+            # Persist the WAL directory entry too (assumes an established data directory).
+            directory_fd = os.open(os.path.dirname(os.path.abspath(self.filepath)), os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        except BaseException:
+            self.failed = True
+            raise
+
+    def replay(self):
+        """Validate before repairing a torn tail; never append or flush MemTable."""
+        records = []
+        valid_end = 0
+        torn_tail = False
+        with open(self.filepath, 'rb') as source:
+            for line_number, line in enumerate(source, 1):
+                if not line.endswith(b'\n'):
+                    torn_tail = True
+                    break
+                try:
+                    text = line.decode('utf-8')
+                    if text.startswith('['):
+                        version, key, value = json.loads(text)
+                        if version != 'wal-v1' or type(key) not in (int, str):
+                            raise ValueError('unsupported WAL record')
+                    else:
+                        raw_key, raw_value = text.split('::', 1)
+                        try:
+                            key = int(raw_key)
+                        except ValueError:
+                            key = raw_key
+                        value = json.loads(raw_value)
+                    records.append((key, value))
+                except (ValueError, UnicodeError) as error:
+                    raise ValueError(f'Corrupt WAL record at line {line_number}') from error
+                valid_end = source.tell()
+        if torn_tail:
+            with open(self.filepath, 'r+b') as repair:
+                repair.truncate(valid_end)
+                repair.flush()
+                os.fsync(repair.fileno())
+        return records
 
     def clear(self):
         self.file.close()
         open(self.filepath, 'w').close() # Clear the file 
-        self.file = open(self.filepath, 'a')
+        self.file = open(self.filepath, 'a', encoding='utf-8')
 
     def close(self):
         self.file.close()
@@ -101,11 +156,23 @@ class LSMTreeEngine:
         # Adding the Bloom Filter to the LSM-Tree Engine  
         # Each memtable has its own Bloom Filter  
         self.bloom_filters = {} 
+        try:
+            for key, value in self.wal.replay():
+                self.memtable.put(key, value)
+        except BaseException:
+            self.wal.close()
+            raise
 
 
     # Defining the put function (Write down the data to the LSM-Tree Engine)
     def put(self, key, value):
-        """(Write Path)"""
+        """Return acknowledges a synchronized WAL append while WAL-backed.
+
+        Failed writes have an unknown recovery outcome. Existing SSTable flush,
+        WAL truncation and compaction are NOT crash-safe: once flush retires the
+        WAL, this phase does not guarantee durability. Replay never triggers them.
+        Single writer only; values follow JSON serialization semantics.
+        """
         # 1. Write to WAL
         self.wal.append(key, value)
         
