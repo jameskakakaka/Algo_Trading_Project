@@ -40,8 +40,8 @@ corruption that still forms a valid record cannot be detected by this parser.
 Phase 2B.1 supersedes the original unsafe flush boundary. SSTables are now
 written and synchronized in temporary files, atomically published without
 overwrite, and directory-synchronized before atomic WAL retirement. Failures
-fence further writes until reopen. Automatic and explicit unsafe compaction are
-disabled. See [SSTABLE_PUBLICATION.md](SSTABLE_PUBLICATION.md) for the ordering
+fence further writes until reopen. Automatic compaction remains disabled. Explicit full compaction leaves WAL
+and MemTable unchanged; see [SSTABLE_COMPACTION.md](SSTABLE_COMPACTION.md). See [SSTABLE_PUBLICATION.md](SSTABLE_PUBLICATION.md) for the ordering
 proof, legacy-file policy, tests, and remaining limitations. WAL record encoding
 and replay validation are unchanged.
 
@@ -49,4 +49,4 @@ Tests include real temporary files, abrupt process exit, replay ordering and key
 types, repeated restarts, legacy input, torn-tail repair, malformed records,
 synchronization errors, and interrupted publication/retirement. They do not
 simulate machine power loss, faulty hardware, or concurrent writers. No empirical
-power-loss safety or general compaction safety is claimed.
+power-loss safety is claimed.

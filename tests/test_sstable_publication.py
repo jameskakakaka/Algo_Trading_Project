@@ -76,7 +76,7 @@ class SSTablePublicationTests(unittest.TestCase):
         self.assertEqual(events, ['fsync', 'publish', 'fsync', 'fsync',
                                   'retire', 'fsync'])
 
-    def test_frozen_clock_multiple_flushes_and_compaction_fence(self):
+    def test_frozen_clock_multiple_flushes_and_manual_compaction(self):
         engine = self.engine()
         with patch('storage_engine.lsm_core.time.time', return_value=1), patch.object(
                 engine, 'compact', side_effect=AssertionError('automatic compaction')):
@@ -85,8 +85,8 @@ class SSTablePublicationTests(unittest.TestCase):
         self.assertEqual(len(self.tables()), 4)
         engine.wal.close()
         recovered = self.engine()
-        with self.assertRaisesRegex(NotImplementedError, 'Phase 2C'):
-            recovered.compact()
+        recovered.compact()
+        self.assertEqual(len(self.tables()), 1)
         for key in range(20):
             self.assertEqual(recovered.get(key), key)
 

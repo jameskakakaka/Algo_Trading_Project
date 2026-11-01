@@ -36,7 +36,7 @@ The system utilizes a microservices architecture, ensuring high availability, fa
 
    * **Write-Ahead Log (WAL):** Ensures durability against crashes.
    * **MemTable:** In-memory data structure for blazing-fast writes.
-   * **SSTables & Automated Compaction:** Flushes data to disk and periodically merges files to optimize storage.
+   * **SSTables & Manual Full Compaction:** Durably flushes data to disk and supports explicit full compaction. Automatic compaction remains disabled; see [the compaction contract](storage_engine/SSTABLE_COMPACTION.md).
    * **Bloom Filters:** Probabilistic data structures embedded in the read path to prevent expensive and unnecessary disk I/O lookups.
 
 4. **AI Brain (Machine Learning):** Real-time feature engineering (RSI, MACD, Bollinger Bands, EMA, ATR) combined with an XGBoost classifier trained on historical data to predict price direction.

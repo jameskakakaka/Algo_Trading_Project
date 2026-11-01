@@ -19,11 +19,12 @@ as described in WAL_RECOVERY.md.
 Phase 2B.1 supersedes the original timestamp collision, publication, WAL
 retirement, and new-table generation-order limitations. New files use numeric
 generations, durable no-overwrite publication, and atomic WAL retirement.
-Automatic compaction is disabled and explicit compact() calls are fenced.
+Automatic compaction is disabled; Phase 2C supports explicit full compact().
 Legacy merged-table provenance remains ambiguous; unsafe combinations fail
 closed rather than silently selecting stale values. See
 [SSTABLE_PUBLICATION.md](SSTABLE_PUBLICATION.md) for the complete contract.
 
 The Phase 2B.0 regressions remain in place alongside Phase 2B.1 fault injection
 and multi-generation tests. Neither suite establishes actual power-loss safety,
-repairs legacy data loss, or makes general compaction safe.
+repairs legacy data loss. See [SSTABLE_COMPACTION.md](SSTABLE_COMPACTION.md)
+for the separately tested full-compaction protocol.

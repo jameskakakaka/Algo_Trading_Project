@@ -66,9 +66,8 @@ Unknown final SSTable identities and duplicate numeric generations also fail
 closed. Such directories require an explicit, separately reviewed migration.
 Prior data loss, collisions, or incorrect compaction cannot be repaired here.
 
-Automatic compaction has been removed. Explicit compact() raises
-NotImplementedError until Phase 2C. Tables accumulate; this trades space/read
-cost for retaining all published inputs. No general compaction safety is claimed.
+Automatic compaction remains disabled. Phase 2C adds explicit full compact();
+see [SSTABLE_COMPACTION.md](SSTABLE_COMPACTION.md) for its protocol and proof.
 
 ## Verification and limits
 
@@ -76,7 +75,7 @@ The unittest suite uses real TemporaryDirectory files, deterministic failures
 at serialization, table fsync, hard-link publication, publication directory
 sync, WAL replacement, and WAL file/directory sync. It checks preserved WAL
 bytes, same-process fencing, reopen recovery, collisions, repeated generations,
-newest-wins, typed keys/null, temporary-file isolation, and compaction fencing.
+newest-wins, typed keys/null, temporary-file isolation, and absence of automatic compaction.
 Subprocess os._exit tests stop immediately after hard-link publication and WAL
 replacement. These test process crashes, not actual power loss or device caches.
 
@@ -89,4 +88,4 @@ startup. A missing externally deleted table cannot be reconstructed after WAL
 retirement. Mutable in-memory values retain the existing API semantics; callers
 must not mutate stored objects outside put(). Directory/ancestor creation is
 not made durable by this phase. Disk exhaustion and orphan cleanup remain
-operational concerns. General compaction remains deferred to Phase 2C.
+operational concerns. Selective, leveled, and background compaction remain deferred.

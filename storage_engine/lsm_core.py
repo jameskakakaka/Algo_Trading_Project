@@ -270,7 +270,7 @@ class LSMTreeEngine:
             os.unlink(temporary.name)
             self.wal.clear()
             self.memtable.clear()
-            # Compaction is deliberately disabled until Phase 2C.
+            # Automatic compaction remains disabled pending independent review.
         except BaseException:
             self.failed = True
             raise
@@ -308,8 +308,56 @@ class LSMTreeEngine:
 
 
     def compact(self):
-        """Unsafe legacy compaction is fenced off pending Phase 2C."""
-        raise NotImplementedError("Compaction disabled until crash-safe Phase 2C")
+        """Durably summarize all published tables, then remove their names.
+
+        Single writer, no concurrent operations. Surviving inputs after a crash
+        are redundant beneath the newer output. WAL and MemTable are untouched.
+        Any failure requires reopen; uncertain operations are never retried here.
+        """
+        if self.failed or self.wal.failed:
+            raise RuntimeError("Storage previously failed; close and reopen the engine")
+        try:
+            files = self._sstable_files()
+            if not files:
+                return
+            merged = {}
+            for name in reversed(files):
+                with open(os.path.join(self.data_dir, name), encoding='utf-8') as source:
+                    data = json.load(source)
+                if not isinstance(data, list):
+                    raise ValueError(f'Invalid SSTable entries: {name}')
+                table = {}
+                for entry in data:
+                    if not isinstance(entry, list) or len(entry) != 2:
+                        raise ValueError(f'Invalid SSTable entry: {name}')
+                    key, value = entry
+                    if type(key) not in (int, str):
+                        raise ValueError(f'Unsupported SSTable key: {name}')
+                    # get() returns the first matching entry within a table.
+                    table.setdefault((type(key), key), value)
+                merged.update(table)
+            entries = sorted(((key, value) for (_, key), value in merged.items()),
+                             key=lambda item: (0 if type(item[0]) is int else 1, item[0]))
+            generation = max(int(re.search(r'([0-9]+)\.json$', name)[1])
+                             for name in files) + 1
+            name = f'sstable_v2_{generation:020d}.json'
+            with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8',
+                                             dir=self.data_dir, prefix='.sstable-',
+                                             delete=False) as temporary:
+                json.dump(entries, temporary, indent=2, allow_nan=False)
+                temporary.flush()
+                os.fsync(temporary.fileno())
+            os.link(temporary.name, os.path.join(self.data_dir, name))
+            _sync_directory(self.data_dir)
+            # Nothing below may run until the output name and data are durable.
+            os.unlink(temporary.name)
+            for old_name in files:
+                os.unlink(os.path.join(self.data_dir, old_name))
+                self.bloom_filters.pop(old_name, None)
+            _sync_directory(self.data_dir)
+        except BaseException:
+            self.failed = True
+            raise
 
 
 if __name__ == "__main__":
