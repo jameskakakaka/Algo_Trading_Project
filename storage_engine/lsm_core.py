@@ -128,10 +128,16 @@ class MemTable:
         self.table[key] = value
 
     def get(self, key):
-        return self.table.get(key, None)
+        return self.table[key] if self.contains(key) else None
+
+    def contains(self, key):
+        # Exclude bool/float aliases of integer keys as well as missing keys.
+        return type(key) in (int, str) and key in self.table
 
     def get_sorted_entries(self):
-        return sorted(self.table.items())
+        # Integers in numeric order, then strings in lexicographic order.
+        return sorted(self.table.items(),
+                      key=lambda item: (0 if type(item[0]) is int else 1, item[0]))
 
     def is_full(self):
         return self.current_size >= self.max_size
@@ -225,10 +231,9 @@ class LSMTreeEngine:
     def get(self, key):
         """(Read Path)""" 
         # Check on RAM first 
-        val = self.memtable.get(key)
-        if val is not None:
+        if self.memtable.contains(key):
             print(f"🔍 [LSM Engine] Found in MemTable: {key}")
-            return val
+            return self.memtable.get(key)
         # Checking on SSTable files 
         # Scanning through from the oldest to the newest 
         sstable_files = sorted([f for f in os.listdir(self.data_dir) if f.startswith("sstable_")], reverse=True)
@@ -247,7 +252,7 @@ class LSMTreeEngine:
             with open(file_path, 'r') as f: 
                 data = json.load(f)
                 for item_key, item_value in data:
-                    if int(item_key) == int(key):
+                    if type(item_key) is type(key) and item_key == key:
                         print(f"🔍 [LSM Engine] Found in SSTable: {file_name}")
                         return item_value 
         print(f"🔍 [LSM Engine] Not found in any SSTable: {key}")
