@@ -8,7 +8,8 @@ be durably established for a power-loss durability claim.
 
 `put()` appends one UTF-8 JSON line `["wal-v1", key, value]`, flushes the Python
 buffer, synchronizes the WAL and its containing directory, then updates memory.
-A successful return below the flush threshold acknowledges this durable append.
+A successful return acknowledges this durable append; at the flush threshold,
+Phase 2B.1 also completes synchronized SSTable publication and WAL retirement.
 An append/synchronization failure propagates before memory is updated and marks
 the WAL unusable for further appends until close/reopen. A failed operation may
 nevertheless be present after recovery: failure is an unknown outcome, not a
@@ -34,17 +35,18 @@ integers; nondecimal legacy keys remain strings. New records preserve that type
 distinction and safely escape newlines and delimiters. There are no checksums:
 corruption that still forms a valid record cannot be detected by this parser.
 
-## Explicit durability boundary
+## Phase 2B.1 durability boundary
 
-The existing flush writes SSTables directly and truncates the WAL without an
-atomic, synchronized publication protocol. Compaction also publishes directly
-and deletes inputs. These mechanisms are unchanged. Once a flush retires WAL
-records, this phase cannot guarantee their crash recovery, including records
-acknowledged by earlier puts. Full-lifetime durability therefore depends on a
-future crash-safe SSTable/WAL handoff and crash-safe compaction. Recovery cannot
-reconstruct records absent from both a surviving WAL and a valid SSTable.
+Phase 2B.1 supersedes the original unsafe flush boundary. SSTables are now
+written and synchronized in temporary files, atomically published without
+overwrite, and directory-synchronized before atomic WAL retirement. Failures
+fence further writes until reopen. Automatic and explicit unsafe compaction are
+disabled. See [SSTABLE_PUBLICATION.md](SSTABLE_PUBLICATION.md) for the ordering
+proof, legacy-file policy, tests, and remaining limitations. WAL record encoding
+and replay validation are unchanged.
 
-Tests cover real temporary files, abrupt process exit, replay ordering and key
+Tests include real temporary files, abrupt process exit, replay ordering and key
 types, repeated restarts, legacy input, torn-tail repair, malformed records,
-and synchronization errors. They do not simulate machine power loss, faulty
-hardware, concurrent writers, or crashes during SSTable flush/compaction.
+synchronization errors, and interrupted publication/retirement. They do not
+simulate machine power loss, faulty hardware, or concurrent writers. No empirical
+power-loss safety or general compaction safety is claimed.

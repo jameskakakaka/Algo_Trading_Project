@@ -2,8 +2,17 @@
 import os
 import json
 import time
-import glob
+import re
+import tempfile
 import hashlib 
+
+
+def _sync_directory(directory):
+    descriptor = os.open(directory, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
 
 
 # Adding Bloom Filter to the LSM-Tree Engine 
@@ -107,9 +116,21 @@ class WriteAheadLog:
         return records
 
     def clear(self):
-        self.file.close()
-        open(self.filepath, 'w').close() # Clear the file 
-        self.file = open(self.filepath, 'a', encoding='utf-8')
+        """Atomically retire the WAL; caller must first durably publish its data."""
+        directory = os.path.dirname(os.path.abspath(self.filepath))
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', dir=directory,
+                                             prefix='.wal-', delete=False) as empty:
+                empty.flush()
+                os.fsync(empty.fileno())
+                temporary = empty.name
+            self.file.close()
+            os.replace(temporary, self.filepath)
+            _sync_directory(directory)
+            self.file = open(self.filepath, 'a', encoding='utf-8')
+        except BaseException:
+            self.failed = True
+            raise
 
     def close(self):
         self.file.close()
@@ -152,6 +173,7 @@ class LSMTreeEngine:
     """The Brain combination of WAL & MemTable"""
     def __init__(self, data_dir="./data"):
         self.data_dir = data_dir
+        self.failed = False
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
             
@@ -163,6 +185,7 @@ class LSMTreeEngine:
         # Each memtable has its own Bloom Filter  
         self.bloom_filters = {} 
         try:
+            self._sstable_files()  # Validate identities before accepting writes.
             for key, value in self.wal.replay():
                 self.memtable.put(key, value)
         except BaseException:
@@ -172,13 +195,13 @@ class LSMTreeEngine:
 
     # Defining the put function (Write down the data to the LSM-Tree Engine)
     def put(self, key, value):
-        """Return acknowledges a synchronized WAL append while WAL-backed.
+        """Acknowledge a synchronized WAL append and, when full, durable flush.
 
-        Failed writes have an unknown recovery outcome. Existing SSTable flush,
-        WAL truncation and compaction are NOT crash-safe: once flush retires the
-        WAL, this phase does not guarantee durability. Replay never triggers them.
-        Single writer only; values follow JSON serialization semantics.
+        Single writer only. Failed writes have an unknown recovery outcome.
+        Reopen after a flush failure; recovery never flushes automatically.
         """
+        if self.failed:
+            raise RuntimeError("Flush previously failed; close and reopen the engine")
         # 1. Write to WAL
         self.wal.append(key, value)
         
@@ -190,43 +213,67 @@ class LSMTreeEngine:
             self.flush_to_sstable()
 
 
-    # Flushing to SSTable
+    def _sstable_files(self):
+        """Newest first; unknown/ambiguous legacy identities fail closed."""
+        tables = []
+        legacy = []
+        for name in os.listdir(self.data_dir):
+            if not (name.startswith('sstable_') and name.endswith('.json')):
+                continue
+            match = re.fullmatch(r'sstable_v2_([0-9]+)\.json', name)
+            if match:
+                tables.append(((1, int(match[1])), name))
+                continue
+            match = re.fullmatch(r'sstable_(merged_)?([0-9]+)\.json', name)
+            if not match:
+                raise ValueError(f'Unsupported SSTable identity: {name}')
+            legacy.append((bool(match[1]), int(match[2]), name))
+        if len(legacy) > 1 and any(merged for merged, _, _ in legacy):
+            raise ValueError('Ambiguous legacy SSTable ordering; explicit migration required')
+        tables.extend(((0, generation), name) for _, generation, name in legacy)
+        identities = [identity for identity, _ in tables]
+        if len(set(identities)) != len(identities):
+            raise ValueError('Duplicate SSTable generation')
+        return [name for _, name in sorted(tables, reverse=True)]
+
     def flush_to_sstable(self):
-        """Flush the Data from RAM to the Disk  (SSTable)"""
-        timestamp = int(time.time() * 1000)
+        """Publish a whole MemTable before retiring any WAL records.
 
-        # Differentiate the file name to save the Key for Dict 
-        sstable_name = f"sstable_{timestamp}.json"
-
-        # The path for sstable 
-        sstable_path = os.path.join(self.data_dir, f"sstable_{timestamp}.json")
-        
-        # Take the data sorted from RAM 
-        sorted_data = self.memtable.get_sorted_entries()
-
-        # Create a Bloom Filter for new file  
-        bf = BloomFilter(size=1000, hash_count=3)
-        
-        # Write down to RAM (SSTable as JSON)
-        with open(sstable_path, 'w') as f:
-            json.dump(sorted_data, f, indent=2)
-
-        for key, _ in sorted_data:
-            bf.add(key)
-    
-        # Set the sstable_name
-        self.bloom_filters[sstable_name] = bf
-
-
-        print(f"💾 [LSM Engine] Flushed {len(sorted_data)} to: {sstable_path}")
-        
-        # Delete the RAM and WAL after writing 
-        self.memtable.clear()
-        self.wal.clear()
-
-
-        # --- COMPACTION IF NECESSARY ---
-        self.compact()
+        Atomic hard-link publication provides no-replace semantics on the same
+        filesystem. Orphan temporary files are ignored, never recovered as tables.
+        """
+        if self.failed or self.wal.failed:
+            raise RuntimeError("Storage previously failed; close and reopen the engine")
+        if not self.memtable.current_size:
+            return
+        try:
+            files = self._sstable_files()
+            generations = [int(name[len('sstable_v2_'):-len('.json')])
+                           for name in files if name.startswith('sstable_v2_')]
+            generation = max(generations, default=0) + 1
+            name = f'sstable_v2_{generation:020d}.json'
+            path = os.path.join(self.data_dir, name)
+            entries = self.memtable.get_sorted_entries()
+            bloom_filter = BloomFilter(size=1000, hash_count=3)
+            for key, _ in entries:
+                bloom_filter.add(key)
+            with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8',
+                                             dir=self.data_dir, prefix='.sstable-',
+                                             delete=False) as temporary:
+                json.dump(entries, temporary, indent=2, allow_nan=False)
+                temporary.flush()
+                os.fsync(temporary.fileno())
+            # Unlike rename/replace, link cannot overwrite an existing destination.
+            os.link(temporary.name, path)
+            _sync_directory(self.data_dir)
+            self.bloom_filters[name] = bloom_filter
+            os.unlink(temporary.name)
+            self.wal.clear()
+            self.memtable.clear()
+            # Compaction is deliberately disabled until Phase 2C.
+        except BaseException:
+            self.failed = True
+            raise
 
     def get(self, key):
         """(Read Path)""" 
@@ -235,8 +282,8 @@ class LSMTreeEngine:
             print(f"🔍 [LSM Engine] Found in MemTable: {key}")
             return self.memtable.get(key)
         # Checking on SSTable files 
-        # Scanning through from the oldest to the newest 
-        sstable_files = sorted([f for f in os.listdir(self.data_dir) if f.startswith("sstable_")], reverse=True)
+        # Explicit generations, newest first; temporary files are excluded.
+        sstable_files = self._sstable_files()
         
         # Checking on the Bloom Filter 
         for file_name in sstable_files:
@@ -260,53 +307,9 @@ class LSMTreeEngine:
 
 
 
-    # Defining the compact
     def compact(self):
-        """
-        The process of gathering all the SSTable files into 1 group
-        """
-        # Look for all the current SSTable files 
-        search_pattern = os.path.join(self.data_dir, "sstable_*.json")
-        sstable_files = [f for f in glob.glob(search_pattern) if "merged" not in f]
-
-        # Up to 3 files then start to gather 
-        if len(sstable_files) >= 3:
-            print(f"⚙️ [COMPACTION] Starting to gathering {len(sstable_files)} small files...")
-            
-            merged_data = {}
-
-            # Read all the files 
-            for file_path in sstable_files:
-                with open(file_path, 'r') as f:
-                    data = json.load(f)
-                    for item in data:
-                        key, value = item[0], item[1]
-                        # Dictionary automatically write on old data with new data if the same key
-                        merged_data[key] = value 
-                        
-            # Organizing the files with TimeStamp
-            sorted_merged_data = sorted(merged_data.items())
-            
-            # Lưu ra file Merged lớn
-            timestamp = int(time.time() * 1000)
-            merged_filename = os.path.join(self.data_dir, f"sstable_merged_{timestamp}.json")
-            with open(merged_filename, 'w') as f:
-                json.dump(sorted_merged_data, f, indent=2)
-            print(f"✅ [COMPACTION] Successfully grouped to: {merged_filename}")
-
-            # Create the Bloom Filter for the file merged
-            merged_bf = BloomFilter(size = 1000, hash_count=3)
-            for k, _ in sorted_merged_data:
-                merged_bf.add(k)
-            self.bloom_filters[merged_filename] = merged_bf
-
-
-            # Cleaning all the previous small files and delete the old Bloom Filter on RAM 
-            for file_path in sstable_files:
-                old_filename = os.path.basename(file_path) # Set the origin
-                if old_filename in self.bloom_filters:
-                    del self.bloom_filters[old_filename] # Clean the RAM
-                os.remove(file_path) # Cleam SStable 
+        """Unsafe legacy compaction is fenced off pending Phase 2C."""
+        raise NotImplementedError("Compaction disabled until crash-safe Phase 2C")
 
 
 if __name__ == "__main__":
