@@ -14,11 +14,11 @@ Current source has no real exchange order-submission implementation. The recomme
 - [ ] Rerun tools.verify on the intended release tree; inspect failures, skips and generated evidence.
 - [ ] Review current/history secret scan, local ignored .env/config and Git author name/email for intended disclosure. Rotate/revoke independently if any exposure is discovered; a clean scan is not revocation evidence.
 - [ ] Audit optional direct/transitive dependencies and Docker image vulnerabilities using approved tooling. No vulnerability database scan or install was performed here.
-- [ ] Validate the pinned Kafka client/broker demo if Kafka functionality is advertised beyond fake tests. Broker verification remains BLOCKED.
+- [ ] Keep Compose startup BLOCKED until the supported replacement passes image provenance/security and pinned-client broker checks; see the [security review](FINAL_RELEASE_HARDENING.md#security-review-2026-11-06). The unsupported 7.5.0 services and startup instructions have been removed.
 - [ ] Validate XGBoost and genuine finalized-market data before claiming market predictive performance. Performance validation remains BLOCKED.
 - [ ] Review data licensing/provenance and avoid committing datasets, pickles, databases, credentials or account logs.
 - [ ] Review single-writer ownership, filesystem assumptions, recovery and namespace preconditions; no hardware power-loss certification.
-- [ ] Review GitHub Actions permissions and pin third-party actions to audited commit SHAs if desired. Remote CI has not run.
+- [ ] Review the verified official action commit pins and existing read-only permissions; retain full SHA pins on updates. Source identity is confirmed, but this is not a complete action security audit. Remote CI has not run.
 - [ ] Check README/CV wording against evidence; no WebSocket, exactly-once, HA, HFT, profit or production claims.
 - [ ] Verify review archive manifest/hash and confirm it contains source/config/docs only.
 - [ ] Owner alone authorizes staging/commits and eventual publication. No automatic publishing flow exists.

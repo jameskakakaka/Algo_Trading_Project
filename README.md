@@ -45,7 +45,7 @@ The same mandatory checks run from a source archive without `.git`. That mode ex
 
 ## Implemented with external verification blocked
 
-Kafka adapters observe producer acknowledgements and commit only after durable effects or proven replay duplicates. Restart deliberately replays retained history from trusted starts; offset commits alone cannot restore processor state. Offline fake tests cover crash windows. A pinned optional client and loopback demo are provided; no broker test was run. See [Kafka recovery](docs/KAFKA_RECOVERY.md).
+Kafka adapters observe producer acknowledgements and commit only after durable effects or proven replay duplicates. Restart deliberately replays retained history from trusted starts; offset commits alone cannot restore processor state. Offline fake tests cover crash windows. The optional client is pinned, but **Compose startup is BLOCKED**: the unsupported Confluent 7.5.0 services were removed and replacement compatibility remains unverified. No broker test was run. See [Kafka recovery](docs/KAFKA_RECOVERY.md) and the [security review](docs/FINAL_RELEASE_HARDENING.md#security-review-2026-11-06).
 
 Optional XGBoost training/native JSON serialization is implemented behind lazy imports. Dependencies and a reviewed real-market dataset were unavailable. No XGBoost results or real-market predictive/trading performance are claimed. The standard-library logistic path is verified on fixtures only. See [ML methodology](docs/ML_METHODOLOGY.md).
 

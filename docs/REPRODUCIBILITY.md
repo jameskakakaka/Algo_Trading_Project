@@ -16,22 +16,12 @@ For a fresh checkout, source files, tests, tools and documents must first be rev
 
 A review source extraction can run the same offline commands without Git. Its fresh results explicitly report history NOT RUN/security INCOMPLETE; inherited repository reports remain historical evidence only. The archive builder includes the validated loopback .env.example, rejects unsafe example edits, verifies changed/untracked relevant-file coverage when Git is available, and writes both a manifest and per-file SHA-256 inventory. Its default output is review_artifacts/final-release-review.tar.gz. Actual extraction verification results are kept under docs/verification/archive/ in the final handoff.
 
-## Optional local Kafka demonstration — not run here
+## Optional local Kafka demonstration — startup BLOCKED
 
-Only after explicit owner approval for dependency installation and local service startup:
+The previous Confluent 7.5.0 Kafka/ZooKeeper stack is out of support. `docker/docker-compose.yml` deliberately defines no services; the old startup instructions have been withdrawn. Use `python3 -B -m tools.demo` for the offline demonstration.
 
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install '.[kafka]'
-docker compose -f docker/docker-compose.yml up -d
-# Wait for broker readiness, then use a fresh fixture topic/group.
-.venv/bin/python -B -m tools.kafka_demo create-topic --allow-local-kafka
-.venv/bin/python -B -m tools.kafka_demo publish --allow-local-kafka
-.venv/bin/python -B -m tools.kafka_demo consume --allow-local-kafka
-```
+The [2026-11-06 security review](FINAL_RELEASE_HARDENING.md#security-review-2026-11-06) records official lifecycle, image and advisory sources, a supported KRaft replacement candidate, and the checks needed before restoring a runnable recipe. Client/broker compatibility, image digest/provenance and vulnerabilities remain unverified. A vendor example or passing fake test does not clear this startup block.
 
-These are setup instructions, not executed evidence. Existing-topic creation errors are deliberate; inspect contents instead of deleting user topics. The CLI sends only deterministic synthetic bars and connects only to loopback. A fresh temporary store is used for each consume invocation; replaying retained data demonstrates reconstruction, not persistent daemon deployment. The default dataset has 160 bars; the consumer requires the expected count, never labels empty history complete. All streams/start cursors must be explicitly known. .env.example supplies the only supported broker variable; export it yourself if needed. No credentials are supported.
-
-The Compose images remain pinned to the existing Confluent 7.5.0 demonstration stack. Ports are loopback-bound but plaintext; no TLS/authentication, replicas, volumes/HA or approved vulnerability status is claimed. Optional dependencies and image compatibility need owner verification before service startup. Never expose these ports publicly.
+The retained Kafka CLI sends deterministic synthetic bars and accepts only loopback connections with `--allow-local-kafka`. It uses a fresh temporary store per consume invocation and requires the expected count; empty history is incomplete. Existing-topic creation errors are deliberate, and all streams/start cursors must be explicitly known. No broker or optional dependency was started or installed in this review.
 
 Optional ML: after owner approval, install `.[ml]`, run tests/test_optional_backends.py through unittest discovery, then run ai_op.research with --kind xgboost on reviewed input. Preserve the full dependency resolution and platform details for real experiments. Legacy extras exist only for source archaeology and are not the recommended execution path.
