@@ -1,0 +1,4 @@
+Command: python3 -B -m tools.verify
+Source: clean temporary extraction without .git
+Candidate source matches final packaged source; generated evidence is excluded from source digest.
+Return code: 0

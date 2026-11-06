@@ -1,0 +1,15 @@
+{
+  "source": "synthetic REST fixtures",
+  "finalized_bars": 160,
+  "restart_reconciled": 160,
+  "feature_rows": 101,
+  "duplicate": "suppressed",
+  "gap": "detected",
+  "conflict": "quarantined",
+  "historical_inference": "blocked",
+  "simulated_live_compatibility": "passed",
+  "paper_execution": "disabled",
+  "network_requests": 0,
+  "profitability": "not evaluated",
+  "kafka": "not used"
+}
