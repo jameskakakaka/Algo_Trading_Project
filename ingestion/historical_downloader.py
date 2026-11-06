@@ -1,10 +1,19 @@
-import requests
-import pandas as pd
-import time
-import os
+"""Deprecated legacy interface; use tools.demo and ai_op.research.
+
+Not part of the validated MARKET_BAR_V1 pipeline. No implicit migration.
+"""
+def _load_legacy_dependencies():
+    global requests, pd, time, os
+    import requests
+    import pandas as pd
+    import time
+    import os
+
+
 
 class HistoricalDataDownloader:
     def __init__(self, symbol="BTCUSDT", interval="15m"):
+        _load_legacy_dependencies()
         self.symbol = symbol
         self.interval = interval
         self.base_url = "https://api.binance.com/api/v3/klines"
@@ -13,6 +22,8 @@ class HistoricalDataDownloader:
     def download_bulk_data(self, total_candles=50000):
         print(f"📥 Starting bulk download: {total_candles} candles of {self.symbol} ({self.interval})...")
         
+        from tools.legacy import require_network_opt_in
+        require_network_opt_in()
         all_data = []
         # Current time in milliseconds
         end_time = int(time.time() * 1000) 
@@ -26,7 +37,7 @@ class HistoricalDataDownloader:
             }
             
             try:
-                response = requests.get(self.base_url, params=params)
+                response = requests.get(self.base_url, params=params, timeout=(3, 10))
                 response.raise_for_status()
                 batch = response.json()
                 
@@ -77,6 +88,7 @@ class HistoricalDataDownloader:
         return save_path
 
 if __name__ == "__main__":
+    raise SystemExit('Legacy entry point disabled; see README for the offline demo and validated interfaces')
     downloader = HistoricalDataDownloader(symbol="BTCUSDT", interval="15m")
     # Fetch 50,000 candles (~520 days of 15m data)
     saved_file = downloader.download_bulk_data(total_candles=50000)

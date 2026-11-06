@@ -5,6 +5,22 @@ __pycache__/
 *.py[cod]
 *$py.class
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+.aws/
+.codex/
+.agents/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+runtime/
+artifacts/
+review_artifacts/*.tar.gz
+review_artifacts/*.sha256
 
 **/.venv*
 **/venv*
@@ -19,6 +35,7 @@ data/
 storage_engine/data/
 *.csv
 *.json
+*.jsonl
 *.parquet
 *.pkl
 wal.log
