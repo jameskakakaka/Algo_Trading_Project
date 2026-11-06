@@ -1,18 +1,27 @@
+"""Deprecated legacy interface; use tools.demo and ai_op.research.
+
+Not part of the validated MARKET_BAR_V1 pipeline. No implicit migration.
+"""
+def _load_legacy_dependencies():
+    global json, pd, deque, joblib, RSIIndicator, MACD, EMAIndicator, BollingerBands, AverageTrueRange, KafkaConsumer
+    import json
+    import pandas as pd
+    from collections import deque
+    import joblib
+    from ta.momentum import RSIIndicator
+    from ta.trend import MACD, EMAIndicator
+    from ta.volatility import BollingerBands, AverageTrueRange
+    from kafka import KafkaConsumer
+
+
 
 # Importing the libraries
-import json 
-import pandas as pd 
-from collections import deque
-import joblib 
-from ta.momentum import RSIIndicator 
-from ta.trend import MACD, EMAIndicator 
-from ta.volatility import BollingerBands, AverageTrueRange 
-from kafka import KafkaConsumer 
 
 
 # Setting up the Paper Trading Bot
 class LiveTradingBot:
     def __init__(self, model_path="../ai_op/xgboost_trading_brain.pkl", window_size=60):
+        raise RuntimeError('Legacy bot retired: use disabled-by-default execution_engine.simulator.PaperAccount')
         print(f"Starting the AI brain from{model_path}...")
         self.model = joblib.load(model_path)
 
@@ -88,6 +97,7 @@ class LiveTradingBot:
             print(f"⚪ [Signal] Không có thay đổi. Trạng thái: {state} ⏳")
 
 if __name__ == "__main__":
+    raise SystemExit('Legacy entry point disabled; see README for the offline demo and validated interfaces')
     print("🔥 KHỞI ĐỘNG HỆ THỐNG GIAO DỊCH TỰ ĐỘNG END-TO-END 🔥")
     
     # Đảm bảo đường dẫn tới file pkl là chính xác
