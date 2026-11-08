@@ -1,0 +1,19 @@
+{
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "cpu": "",
+  "logical_cpus": 12,
+  "storage": "TemporaryDirectory on local filesystem; mount/hardware unspecified",
+  "concurrency": 1,
+  "memtable_threshold": 32,
+  "synthetic_records": 200,
+  "write_s": 1.0960378170129843,
+  "writes_per_s": 182.47545558697695,
+  "read_mean_s": 0.00012400214494846296,
+  "explicit_flush_s": 0.02012132600066252,
+  "compaction_s": 0.01514060900080949,
+  "restart_s": 0.00023033900652080774,
+  "tables_before": 7,
+  "tables_after": 1,
+  "disk_bytes": 15892
+}

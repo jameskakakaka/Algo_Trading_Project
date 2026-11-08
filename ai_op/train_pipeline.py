@@ -1,24 +1,35 @@
+"""Deprecated legacy interface; use tools.demo and ai_op.research.
+
+Not part of the validated MARKET_BAR_V1 pipeline. No implicit migration.
+"""
+def _load_legacy_dependencies():
+    global pd, requests, RSIIndicator, MACD, BollingerBands, XGBClassifier, classification_report, accuracy_score
+    import pandas as pd
+    import requests
+    from ta.momentum import RSIIndicator
+    from ta.trend import MACD
+    from ta.volatility import BollingerBands
+    from xgboost import XGBClassifier
+    from sklearn.metrics import classification_report, accuracy_score
+
+
 # Importing the libraries
-import pandas as pd
-import requests
-from ta.momentum import RSIIndicator
-from ta.trend import MACD
-from ta.volatility import BollingerBands
-from xgboost import XGBClassifier
-from sklearn.metrics import classification_report, accuracy_score
 
 
 # Defining the class models.
 class ModelTrainer:
     def __init__(self, symbol="BTCUSDT", interval="1m"):
+        _load_legacy_dependencies()
         self.symbol = symbol
         self.interval = interval
         
     def fetch_historical_data(self, limit=1000):
         """Fetch bulk data history from Binance API (Max100candles)"""
+        from tools.legacy import require_network_opt_in
+        require_network_opt_in()
         url = "https://api.binance.com/api/v3/klines"
         params = {"symbol": self.symbol, "interval": self.interval, "limit": limit}
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=(3, 10))
         raw_data = response.json()
         
         df = pd.DataFrame(raw_data, columns=[
@@ -47,7 +58,8 @@ class ModelTrainer:
         
         # 2. LABELING: Prediciting next increase / decrease
         # IF the next closing value (shift -1) > current closing value -> Then = increase, opposite is close (0)
-        df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
+        future_close = df['close'].shift(-1)
+        df['target'] = (future_close > df['close']).astype(float).where(future_close.notna())
         
         # Dropping the NA values
         df.dropna(inplace=True)
@@ -70,8 +82,8 @@ class ModelTrainer:
         # Taking 80% of far history to train, 20% of recent to test
         split_idx = int(len(X) * 0.8)
         
-        X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
-        y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
+        X_train, X_test = X.iloc[:split_idx-1], X.iloc[split_idx:]
+        y_train, y_test = y.iloc[:split_idx-1], y.iloc[split_idx:]
         
         print(f"🏋️ Running the training model of XGBCModel {len(X_train)}...")
         model = XGBClassifier(n_estimators=100, max_depth=3, learning_rate=0.1, random_state=42)
@@ -90,5 +102,6 @@ class ModelTrainer:
         return model
 
 if __name__ == "__main__":
+    raise SystemExit('Legacy entry point disabled; see README for the offline demo and validated interfaces')
     trainer = ModelTrainer(symbol="BTCUSDT", interval="1m")
     trained_model = trainer.train()

@@ -1,15 +1,24 @@
+"""Deprecated legacy interface; use tools.demo and ai_op.research.
+
+Not part of the validated MARKET_BAR_V1 pipeline. No implicit migration.
+"""
+def _load_legacy_dependencies():
+    global bootstrap, requests, json, time, KafkaProducer
+    from ensurepip import bootstrap
+    import requests
+    import json
+    import time
+    from kafka import KafkaProducer
+
+
 
 
 # Importing libraries 
-from ensurepip import bootstrap
-import requests
-import json 
-import time 
-from kafka import KafkaProducer
 
 # Defining the Extracting from the Binance
 class BinanceDataFetcher:
     def __init__(self, symbol="BTCUSDT", interval="1m"):
+        _load_legacy_dependencies()
         self.symbol = symbol
         self.interval = interval 
         self.base_url = "https://api.binance.com/api/v3/klines"
@@ -20,6 +29,8 @@ class BinanceDataFetcher:
         Binance returning lists then we map them into Schema
         """
     
+        from tools.legacy import require_network_opt_in
+        require_network_opt_in()
         params = {
             "symbol": self.symbol,
             "interval": self.interval,
@@ -27,7 +38,7 @@ class BinanceDataFetcher:
         }
 
         try:
-            response = requests.get(self.base_url, params = params)
+            response = requests.get(self.base_url, params = params, timeout=(3, 10))
             response.raise_for_status() # Look for errors API 
             raw_data = response.json()
 
@@ -53,6 +64,7 @@ class BinanceDataFetcher:
             print(f"Error while fetching form Binance:{e}")
 
 if __name__ == "__main__":
+    raise SystemExit('Legacy entry point disabled; see README for the offline demo and validated interfaces')
     print("🚀 Starting Ingestion Service...")
     
     # Initialize Kafka Producer

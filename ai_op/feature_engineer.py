@@ -1,16 +1,25 @@
+"""Deprecated legacy interface; use tools.demo and ai_op.research.
+
+Not part of the validated MARKET_BAR_V1 pipeline. No implicit migration.
+"""
+def _load_legacy_dependencies():
+    global json, pd, RSIIndicator, MACD, BollingerBands, KafkaConsumer, deque
+    import json
+    import pandas as pd
+    from ta.momentum import RSIIndicator
+    from ta.trend import MACD
+    from ta.volatility import BollingerBands
+    from kafka import KafkaConsumer
+    from collections import deque
+
+
 # Importing libraries
-import json
-import pandas as pd
-from ta.momentum import RSIIndicator
-from ta.trend import MACD
-from ta.volatility import BollingerBands
-from kafka import KafkaConsumer
-from collections import deque
 
 
 # Defining the Streaming Feature
 class StreamingFeatureEngineer:
     def __init__(self, window_size=50):
+        _load_legacy_dependencies()
         self.data_window = deque(maxlen=window_size)
         
     def add_candle_and_extract_features(self, raw_candle):
@@ -50,6 +59,7 @@ class StreamingFeatureEngineer:
         return latest_features
 
 if __name__ == "__main__":
+    raise SystemExit('Legacy entry point disabled; see README for the offline demo and validated interfaces')
     print("🧠 AI Brain restarting...")
     
     consumer = KafkaConsumer(

@@ -1,17 +1,26 @@
+"""Deprecated legacy interface; use tools.demo and ai_op.research.
+
+Not part of the validated MARKET_BAR_V1 pipeline. No implicit migration.
+"""
+def _load_legacy_dependencies():
+    global pd, os, RSIIndicator, MACD, EMAIndicator, BollingerBands, AverageTrueRange, XGBClassifier, classification_report, accuracy_score, joblib
+    import pandas as pd
+    import os
+    from ta.momentum import RSIIndicator
+    from ta.trend import MACD, EMAIndicator
+    from ta.volatility import BollingerBands, AverageTrueRange
+    from xgboost import XGBClassifier
+    from sklearn.metrics import classification_report, accuracy_score
+    import joblib # Save model after training
+
+
 
 # Importing the libraries 
-import pandas as pd
-import os
-from ta.momentum import RSIIndicator
-from ta.trend import MACD, EMAIndicator
-from ta.volatility import BollingerBands, AverageTrueRange
-from xgboost import XGBClassifier
-from sklearn.metrics import classification_report, accuracy_score
-import joblib # Save model after training 
 
 # Identify the ModelTrainer 
 class AdvancedModelTrainer:
     def __init__(self, data_path="../BTCUSDT_15m_historical.csv"):
+        _load_legacy_dependencies()
         self.data_path = data_path 
 
     def load_offline_data(self):
@@ -53,7 +62,8 @@ class AdvancedModelTrainer:
         df['ATR_14'] = AverageTrueRange(high=df['high'], low=df['low'], close=df['close'], window=14).average_true_range()
         
         # 3. Label (LABELING)
-        df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
+        future_close = df['close'].shift(-1)
+        df['target'] = (future_close > df['close']).astype(float).where(future_close.notna())
         
         df.dropna(inplace=True)
         return df
@@ -74,8 +84,8 @@ class AdvancedModelTrainer:
         # Time-series Split (80/20)
         split_idx = int(len(X) * 0.8)
         
-        X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
-        y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
+        X_train, X_test = X.iloc[:split_idx-1], X.iloc[split_idx:]
+        y_train, y_test = y.iloc[:split_idx-1], y.iloc[split_idx:]
         
         print(f"🏋️ Đang train XGBoost với {len(X_train)} nến (Khung 15m)...")
         # Upgrade max_depth up to 5 for model to learn more complex pattern
@@ -99,6 +109,7 @@ class AdvancedModelTrainer:
         return model, data_df, feature_cols
 
 if __name__ == "__main__":
+    raise SystemExit('Legacy entry point disabled; see README for the offline demo and validated interfaces')
     trainer = AdvancedModelTrainer(data_path="../BTCUSDT_15m_historical.csv")
     trained_model, processed_data, features = trainer.train()
                 

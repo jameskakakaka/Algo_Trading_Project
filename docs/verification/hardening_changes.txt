@@ -1,0 +1,43 @@
+Final release-hardening evidence
+
+Changes relative to the start-of-turn content snapshot (earlier uncommitted work preserved):
+MODIFIED README.md
+MODIFIED docs/COMPLETION_REVIEW.md
+MODIFIED docs/ENGINEERING_PROGRESS.md
+ADDED docs/FINAL_RELEASE_HARDENING.md
+MODIFIED docs/KAFKA_RECOVERY.md
+MODIFIED docs/RELEASE_READINESS.md
+MODIFIED docs/REPRODUCIBILITY.md
+MODIFIED docs/TESTING.md
+MODIFIED docs/VALIDATION_MATRIX.md
+MODIFIED streaming/kafka_transport.py
+MODIFIED tests/test_kafka_transport.py
+ADDED tests/test_release_tools.py
+MODIFIED tools/check.py
+MODIFIED tools/kafka_demo.py
+ADDED tools/repository.py
+MODIFIED tools/review_archive.py
+MODIFIED tools/security_audit.py
+MODIFIED tools/verify.py
+
+Generated evidence changed/added:
+ADDED docs/verification/archive/benchmark.txt
+ADDED docs/verification/archive/demo.txt
+ADDED docs/verification/archive/execution.txt
+ADDED docs/verification/archive/results.txt
+ADDED docs/verification/archive/security.txt
+ADDED docs/verification/archive/unittest.txt
+MODIFIED docs/verification/benchmark.txt
+MODIFIED docs/verification/results.txt
+MODIFIED docs/verification/security.txt
+MODIFIED docs/verification/unittest.txt
+ADDED docs/verification/hardening_changes.txt
+
+Repository: 174 executed, 172 passed, 2 skipped, 0 failures/errors; 45.130623733988614 seconds.
+Clean source extraction: 174 executed, 172 passed, 2 skipped, 0 failures/errors; 43.93545052499394 seconds.
+Both skipped backends absent locally: kafka-python and XGBoost. Independent earlier reviewer count (158 passed/1 skip) belongs to their environment.
+Both runs: 30 module parse/import checks and compileall passed; demo 160 bars/101 features; benchmark completed.
+Repository Git history: COMPLETED heuristic scan. Extraction Git history: NOT_RUN, security clearance INCOMPLETE.
+Strict release history/owner-attestation rejection and stale source binding covered by regression tests; no owner attestation supplied.
+Relevant sources/configuration/docs match across repository and extraction: adc36cb79680d2ccc152ab44e2964733b775e951c4b1c6850593227f2368583f
+No dependencies installed, services started, Kafka broker verified, trading activated, Git commits or pushes.

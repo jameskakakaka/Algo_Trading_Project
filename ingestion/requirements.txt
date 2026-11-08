@@ -1,0 +1,2 @@
+# Recommended offline commands use Python's standard library only.
+# Optional dependencies are pinned in pyproject.toml. No packages auto-install.

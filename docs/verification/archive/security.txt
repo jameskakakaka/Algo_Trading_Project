@@ -1,0 +1,30 @@
+{
+  "current_files_scanned": 80,
+  "unique_git_blobs_scanned": null,
+  "git_history": {
+    "status": "NOT_RUN",
+    "reason": "No .git metadata at source root; history unavailable"
+  },
+  "security_clearance": "INCOMPLETE: heuristic scan; owner review required",
+  "findings": [
+    {
+      "location": "tools/security_audit.py",
+      "category": "personal_path",
+      "line": 16
+    },
+    {
+      "location": "tools/security_audit.py",
+      "category": "personal_path",
+      "line": 16
+    }
+  ],
+  "large_historical_blobs": [],
+  "sensitive_tracked_paths": null,
+  "local_env_files": [],
+  "limitations": [
+    "heuristic scan only; unreferenced Git objects excluded",
+    "runtime/private metadata directories excluded",
+    "dependency vulnerabilities not assessed; optional packages unavailable",
+    "Git author metadata requires owner review"
+  ]
+}
